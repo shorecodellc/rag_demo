@@ -9,6 +9,13 @@ The generated content includes citations that refer to the appropriate Criminal 
 This is not meant to get actual legal advice. Please consult an actual legal expert such as a lawyer
 or police officer should you want to know the facts about the laws in Canada.
 
+### Screenshots
+
+![My App Screenshot](images/rag_demo1.png)
+![My App Screenshot](images/rag_demo2.png)
+![My App Screenshot](images/rag_demo3.png)
+![My App Screenshot](images/rag_demo4.png)
+
 ### Getting Started
 
 streamlit run ./src/rag_demo/rd_streamlit.py
