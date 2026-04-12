@@ -36,7 +36,7 @@ def set_logging(name: str, filename: str) -> logging.Logger:
     if getattr(sys, 'frozen', False):
         log_dir = os.path.join(os.path.dirname(sys.executable), 'logging')
     else:
-        log_dir = os.path.join(os.path.dirname(__file__), 'logging')
+        log_dir = os.path.join(os.getcwd(), 'logging')
     if not os.path.isdir(log_dir):
         os.mkdir(log_dir)
 

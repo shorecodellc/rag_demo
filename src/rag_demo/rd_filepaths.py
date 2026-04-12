@@ -1,49 +1,45 @@
-#kevin fink
-#kevin@shorecode.org
-#Mon Apr  6 09:49:55 AM +07 2026
-#.py
-
+from dataclasses import dataclass, field
+from pathlib import Path
 import os
 import sys
-import platform
-import pathlib
-from dataclasses import dataclass, field
+
 
 @dataclass
 class Files:
-    current_platform: str = field(init=False)
-    filepaths: list = field(default_factory=lambda: ['logging/1.log', 'data', 'data/c-46.pdf'])
-    win_filepaths: list = field(default_factory=list)
+    filepaths: list[str] = field(default_factory=lambda: [
+        "logging/1.log",
+        "data",
+        "data/c-46.pdf"
+    ])
 
     def __post_init__(self):
-        self.current_platform = platform.system()      
-        if self.current_platform == 'Windows':
-            for f in self.filepaths:
-                f = f.replace('/', '\\')
-                if getattr(sys, 'frozen', False):
-                    f = os.path.join(os.path.dirname(sys.executable), f)
-                    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = os.path.dirname(sys.executable)
-                else:
-                    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), f)
-                self.win_filepaths.append(f)
-            self.win_filepaths[0] = os.path.join(os.path.dirname(sys.executable), 'logging', '1.log')
-        else:
-            for idx, f in enumerate(self.filepaths):
-                if getattr(sys, 'frozen', False):
-                    f = os.path.join(os.path.dirname(sys.executable), f)
-                    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = os.path.dirname(sys.executable)
-                else:
-                    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), f)
-                self.filepaths[idx] = f
+        base_dir = self._get_base_dir()
 
-    def get_files_list(self) -> list:
-        if self.current_platform == 'Windows':
-            return self.win_filepaths
-        else:
-            return self.filepaths
-        
+        resolved_paths = []
+        for rel_path in self.filepaths:
+            full_path = base_dir / rel_path
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            resolved_paths.append(full_path)
+
+        self.filepaths = resolved_paths
+
+    def _get_base_dir(self) -> Path:
+        # 1. Explicit override (BEST)
+        env_dir = os.getenv("APP_BASE_DIR")
+        if env_dir:
+            return Path(env_dir).resolve()
+
+        # 2. Frozen binary
+        if getattr(sys, "frozen", False):
+            base = Path(sys.executable).parent
+            os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(base)
+            return base
+
+        # 3. Fallback: working directory
+        return Path.cwd().resolve()
+
+    def get_files_list(self) -> list[str]:
+        return [str(p) for p in self.filepaths]
+
     def get_file_by_index(self, idx: int) -> str:
-        if self.current_platform == 'Windows':
-            return self.win_filepaths[idx]
-        else:
-            return self.filepaths[idx]
+        return str(self.filepaths[idx])

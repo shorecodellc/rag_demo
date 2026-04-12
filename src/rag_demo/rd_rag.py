@@ -238,7 +238,7 @@ class RagDemo:
             rrf_scores[doc.page_content] = (rrf_scores.get(doc.page_content, (0.0, 0.0))[0] + 1.0 / modifier, doc)
         return sorted(rrf_scores.items(), key=lambda x: x[1][0], reverse=True)
           
-    async def retrieve(self, query: str, api_key: str, k: int = 5) -> list[dict]:
+    async def retrieve(self, query: str, k: int = 5) -> list[dict]:
         """
         Full pipeline:
           BM25 + FAISS  →  Reciprocal Rank Fusion  →  LLM cross-encoder re-ranking
