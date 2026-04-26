@@ -3,7 +3,7 @@
     <div style="width: 100%; max-width: 800px;">
 
       <div class="text-h4 q-mb-md">
-        ⚖️ Canadian Criminal Code RAG (Retrieval Only)
+        ⚖️ Canadian Criminal Code RAG (Retrieval Only) - By Kevin Fink
       </div>
       <div class='text-h6 q-mb-md'>
         This is not to be considered legal advice, contact a lawyer or the police for serious questions about the law
@@ -97,7 +97,7 @@
           </div>
 
           <div class="text-body2 q-mt-sm">
-            {{ doc.page_content?.slice(0, 500) }}
+            {{ doc.page_content }}
           </div>
 
           <q-separator class="q-my-md" />

@@ -1,10 +1,16 @@
+import json
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from rag_demo.rd_rag import RagDemo
+from rag_demo.rd_codegen import CodeGenerator, CodegenRequest, CodegenResponse, _strip_fences, _extract_node_names
+from rag_demo.routes.rd_horses import router as horses_router
 
 app = FastAPI(title="Criminal Code RAG API (Retrieval Only)")
+app.include_router(horses_router)
 
 
 # ---- Request / Response Models ----
@@ -18,7 +24,7 @@ class QueryResponse(BaseModel):
         
 # ---- CORS CONFIG ----
 origins = [
-    #"http://localhost:9000"
+    "http://localhost:9000",
     "https://ragdemo.shorecode.org",
 ]
 
@@ -73,3 +79,42 @@ async def query_rag(request: QueryRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---- Codegen instance ----
+_codegen = CodeGenerator()
+
+
+# ---- LangGraph generator endpoint (one-shot) ----
+@app.post("/codegen", response_model=CodegenResponse)
+async def generate_agent(request: CodegenRequest):
+    if not request.description:
+        raise HTTPException(status_code=400, detail="Description cannot be empty")
+    try:
+        return await _codegen.generate(request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---- LangGraph generator endpoint (streaming SSE) ----
+@app.post("/codegen/stream")
+async def stream_agent(request: CodegenRequest):
+    if not request.description:
+        raise HTTPException(status_code=400, detail="Description cannot be empty")
+
+    accumulated: list[str] = []
+
+    async def event_generator():
+        try:
+            async for token in _codegen.stream_tokens(request):
+                accumulated.append(token)
+                yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Send final node_names after streaming completes
+            full_code = _strip_fences("".join(accumulated))
+            node_names = _extract_node_names(full_code)
+            yield f"data: {json.dumps({'done': True, 'node_names': node_names})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

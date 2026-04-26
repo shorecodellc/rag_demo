@@ -22,4 +22,6 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "pdfplumber",
+    "pandas>=2.2",
+    "horse_predictions",
 ]
